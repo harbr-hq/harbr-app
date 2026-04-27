@@ -1,0 +1,23 @@
+[advisories]
+
+# RUSTSEC-2026-0009: time 0.3.45 DoS
+# Blocked by mac-notification-sys hard-pinning time = "=0.3.45" via
+# tauri-plugin-notification → notify-rust. Cannot fix without upstream release.
+ignore = [
+    "RUSTSEC-2026-0009",
+
+    # RUSTSEC-2026-0097: rand 0.7.3 unsoundness
+    # Transitive via phf_generator → kuchikiki → tauri-utils → tauri.
+    # Cannot fix without upstream Tauri update.
+    "RUSTSEC-2026-0097",
+
+    # RUSTSEC-2024-0429: glib 0.18.5 unsoundness
+    # Transitive via webkit2gtk → tauri (Linux GTK backend).
+    # Cannot fix without upstream Tauri update.
+    "RUSTSEC-2024-0429",
+
+    # RUSTSEC-2023-0071: rsa 0.9.x Marvin Attack timing side-channel
+    # Transitive via jsonwebtoken → surrealdb. No patched version of rsa exists.
+    # Not exploitable in this context — SurrealDB is embedded and local-only.
+    "RUSTSEC-2023-0071",
+]
