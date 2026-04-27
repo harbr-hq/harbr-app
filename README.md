@@ -6,6 +6,7 @@ No forced sign-ins. No Electron. No bloat. Just a fast desktop app that stays ou
 ![CI](https://github.com/harbr-hq/harbr-app/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-gunzzblazzing-FFDD00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/gunzzblazzing)
 
 ---
 
