@@ -3,7 +3,7 @@
 **A native container manager built for developers who use Podman.**
 No forced sign-ins. No Electron. No bloat. Just a fast desktop app that stays out of your way.
 
-![CI](https://github.com/harbr-hq/harbr/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/harbr-hq/harbr-app/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
@@ -35,7 +35,7 @@ systemctl --user enable --now podman.socket
 pip install podman-compose
 
 # Clone, install, build, run
-git clone https://github.com/harbr-hq/harbr
+git clone https://github.com/harbr-hq/harbr-app
 cd harbr && pnpm install && pnpm tauri build
 ./src-tauri/target/release/harbr
 ```
