@@ -58,9 +58,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
 
-      - name: Audit Rust dependencies
-        run: cargo audit
-        working-directory: src-tauri
+      - name: Install semgrep
+        run: pip install semgrep
+
+      - name: Run security audit
+        run: bash scripts/security-audit.sh
