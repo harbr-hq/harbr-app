@@ -314,6 +314,7 @@ async fn get_project(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ComposeProject>, AppError> {
+    validate_project_name(&name)?;
     let projects = build_project_list(&state).await?;
     projects
         .into_iter()
@@ -326,6 +327,7 @@ async fn get_file(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ComposeFileContent>, AppError> {
+    validate_project_name(&name)?;
     let path = resolve_file_path(&name, &state).await?
         .ok_or_else(|| AppError::not_found(format!("No compose file for '{name}'")))?;
 
@@ -348,6 +350,7 @@ async fn save_file(
     State(state): State<AppState>,
     Json(body): Json<SaveFileBody>,
 ) -> Result<StatusCode, AppError> {
+    validate_project_name(&name)?;
     let path = resolve_file_path(&name, &state).await?
         .ok_or_else(|| AppError::not_found(format!("No compose file for '{name}'")))?;
 
@@ -368,6 +371,7 @@ async fn create_project(
     State(state): State<AppState>,
     Json(body): Json<CreateComposeBody>,
 ) -> Result<Json<ComposeProject>, AppError> {
+    validate_project_name(&body.name)?;
     let errs = validate_content(&body.content);
     if !errs.is_empty() {
         return Err(AppError::unprocessable(errs.join("; ")));
@@ -416,6 +420,7 @@ async fn delete_project(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> Result<StatusCode, AppError> {
+    validate_project_name(&name)?;
     // Bring containers down before removing the file — compose down needs the
     // file to exist to know which containers belong to this project.
     run_op_silent(name.clone(), "down", vec!["down".to_string()], state.clone()).await;
@@ -484,6 +489,24 @@ async fn validate_file(
 }
 
 // ─── Validation ─────────────────────────────────────────────────────────────
+
+/// Allowlist: starts with alphanumeric, remainder is alphanumeric, hyphen, or underscore, max 64 chars.
+/// Prevents path traversal via unsanitised names used in Path::join (OM-2026-001).
+fn validate_project_name(name: &str) -> Result<(), AppError> {
+    if name.is_empty() || name.len() > 64 {
+        return Err(AppError::unprocessable("Project name must be 1–64 characters"));
+    }
+    let mut chars = name.chars();
+    if !chars.next().unwrap().is_ascii_alphanumeric() {
+        return Err(AppError::unprocessable("Project name must start with a letter or digit"));
+    }
+    if !chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+        return Err(AppError::unprocessable(
+            "Project name may only contain letters, digits, hyphens, and underscores",
+        ));
+    }
+    Ok(())
+}
 
 fn validate_content(content: &str) -> Vec<String> {
     match serde_yaml::from_str::<serde_yaml::Value>(content) {
@@ -787,6 +810,7 @@ async fn op_up_rest(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> StatusCode {
+    if validate_project_name(&name).is_err() { return StatusCode::UNPROCESSABLE_ENTITY; }
     tokio::spawn(run_op_silent(name, "up", vec!["up".to_string(), "-d".to_string()], state));
     StatusCode::ACCEPTED
 }
@@ -795,6 +819,7 @@ async fn op_down_rest(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> StatusCode {
+    if validate_project_name(&name).is_err() { return StatusCode::UNPROCESSABLE_ENTITY; }
     tokio::spawn(run_op_silent(name, "down", vec!["down".to_string()], state));
     StatusCode::ACCEPTED
 }
@@ -803,6 +828,7 @@ async fn op_restart_rest(
     Path(name): Path<String>,
     State(state): State<AppState>,
 ) -> StatusCode {
+    if validate_project_name(&name).is_err() { return StatusCode::UNPROCESSABLE_ENTITY; }
     tokio::spawn(run_op_silent(name, "restart", vec!["restart".to_string()], state));
     StatusCode::ACCEPTED
 }
@@ -811,16 +837,18 @@ async fn op_up_ws(
     ws: WebSocketUpgrade,
     Path(name): Path<String>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    op_ws_handler(ws, name, vec!["up".to_string(), "-d".to_string()], state).await
+) -> axum::response::Response {
+    if let Err(e) = validate_project_name(&name) { return e.into_response(); }
+    op_ws_handler(ws, name, vec!["up".to_string(), "-d".to_string()], state).await.into_response()
 }
 
 async fn op_down_ws(
     ws: WebSocketUpgrade,
     Path(name): Path<String>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    op_ws_handler(ws, name, vec!["down".to_string()], state).await
+) -> axum::response::Response {
+    if let Err(e) = validate_project_name(&name) { return e.into_response(); }
+    op_ws_handler(ws, name, vec!["down".to_string()], state).await.into_response()
 }
 
 async fn op_restart_ws(
@@ -828,20 +856,22 @@ async fn op_restart_ws(
     Path(name): Path<String>,
     Query(query): Query<ServiceQuery>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
+) -> axum::response::Response {
+    if let Err(e) = validate_project_name(&name) { return e.into_response(); }
     let mut args = vec!["restart".to_string()];
     if let Some(svc) = query.service {
         args.push(svc);
     }
-    op_ws_handler(ws, name, args, state).await
+    op_ws_handler(ws, name, args, state).await.into_response()
 }
 
 async fn op_pull_ws(
     ws: WebSocketUpgrade,
     Path(name): Path<String>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    op_ws_handler(ws, name, vec!["pull".to_string()], state).await
+) -> axum::response::Response {
+    if let Err(e) = validate_project_name(&name) { return e.into_response(); }
+    op_ws_handler(ws, name, vec!["pull".to_string()], state).await.into_response()
 }
 
 // ─── Compose logs WS ─────────────────────────────────────────────────────────
@@ -857,8 +887,9 @@ async fn project_logs_ws(
     ws: WebSocketUpgrade,
     Path(name): Path<String>,
     State(state): State<AppState>,
-) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| stream_project_logs(socket, name, state))
+) -> axum::response::Response {
+    if let Err(e) = validate_project_name(&name) { return e.into_response(); }
+    ws.on_upgrade(move |socket| stream_project_logs(socket, name, state)).into_response()
 }
 
 async fn stream_project_logs(mut socket: WebSocket, name: String, state: AppState) {
