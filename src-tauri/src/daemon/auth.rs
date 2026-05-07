@@ -54,7 +54,35 @@ fn write_token(path: &Path, token: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
+fn write_token(path: &Path, token: &str) -> anyhow::Result<()> {
+    use windows_acl::acl::ACL;
+    use windows_acl::helper::current_user;
+
+    std::fs::write(path, token)?;
+
+    let path_str = path
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("Token path contains non-Unicode characters"))?;
+
+    let username = current_user()
+        .map_err(|e| anyhow::anyhow!("Failed to get current user: error code {e}"))?;
+
+    let mut acl = ACL::from_file_path(path_str, false)
+        .map_err(|e| anyhow::anyhow!("Failed to open file ACL: error code {e}"))?;
+
+    // Remove all inherited entries — file would otherwise inherit parent dir permissions.
+    acl.remove(None, None, None);
+
+    // Grant the current user exclusive read/write (GENERIC_READ | GENERIC_WRITE).
+    if !acl.allow(&username, false, 0xC000_0000u32) {
+        anyhow::bail!("Failed to apply restrictive ACL to token file");
+    }
+
+    Ok(())
+}
+
+#[cfg(not(any(unix, windows)))]
 fn write_token(path: &Path, token: &str) -> anyhow::Result<()> {
     std::fs::write(path, token)?;
     Ok(())

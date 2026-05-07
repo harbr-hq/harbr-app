@@ -46,3 +46,6 @@ uuid = { version = "1", features = ["v4"] }
 serde_yaml = "0.9"
 reqwest = { version = "0.13", default-features = false, features = ["json"] }
 arboard = "3"
+
+[target.'cfg(windows)'.dependencies]
+windows-acl = "0.3"
