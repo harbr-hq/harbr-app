@@ -62,6 +62,7 @@ import { SortableGroupPanel } from "@/components/containers/sortable-group-panel
 import { EMPTY_GROUPS, findGroupForContainer, getColour } from "@/components/containers/group-panel";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/text-input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -115,6 +116,31 @@ function GroupDragPreview({ group, containerCount }: { group: ContainerGroup; co
   );
 }
 
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function GroupPanelSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="mb-3 rounded-xl overflow-hidden ring-1 ring-border/50 bg-muted/10">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b bg-muted/20 border-border/30">
+        <div className="w-3.5 shrink-0" />
+        <div className="w-3.5 shrink-0" />
+        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-4 w-6 rounded-full ml-1" />
+      </div>
+      <div className="divide-y divide-border/30">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-3.5 w-20 ml-2" />
+            <Skeleton className="h-5 w-14 ml-auto rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function GroupedView({
@@ -143,7 +169,7 @@ export function GroupedView({
   const [newGroupName, setNewGroupName] = useState("");
   const [showNewGroup, setShowNewGroup] = useState(false);
 
-  const { data: serverGroups = EMPTY_GROUPS } = useQuery({
+  const { data: serverGroups = EMPTY_GROUPS, isLoading: groupsLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
     refetchInterval: 5_000,
@@ -531,6 +557,13 @@ export function GroupedView({
       </div>
 
       <div className="pl-4 pr-4 pt-2">
+        {groupsLoading ? (
+          <>
+            <GroupPanelSkeleton rows={3} />
+            <GroupPanelSkeleton rows={2} />
+            <GroupPanelSkeleton rows={4} />
+          </>
+        ) : (
         <SortableContext
           items={mergedGroups.map((g) => `grp:${g.id}`)}
           strategy={verticalListSortingStrategy}
@@ -562,6 +595,7 @@ export function GroupedView({
             />
           ))}
         </SortableContext>
+        )}
       </div>
     </DndContext>
   );
