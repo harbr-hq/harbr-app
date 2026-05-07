@@ -1,0 +1,13 @@
+[advisories]
+ignore = [
+    # Marvin Attack timing side-channel in rsa crate. No fix available.
+    # Transitive: surrealdb -> surrealdb-core -> jsonwebtoken -> rsa.
+    # Cannot remediate until SurrealDB drops or replaces jsonwebtoken.
+    { id = "RUSTSEC-2023-0071", reason = "No fix available; tracked in upstream SurrealDB" },
+
+    # DoS via stack exhaustion in time crate. Fix requires >= 0.3.47 but
+    # mac-notification-sys v0.6.10 hard-pins time = "=0.3.45".
+    # Transitive: tauri-plugin-notification -> notify-rust -> mac-notification-sys -> time.
+    # Cannot remediate until mac-notification-sys releases an update.
+    { id = "RUSTSEC-2026-0009", reason = "Pinned by mac-notification-sys; tracked upstream" },
+]
