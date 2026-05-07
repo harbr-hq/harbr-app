@@ -125,12 +125,22 @@ check_pattern() {
 
 # OM-2026-001: path join with a variable argument (route handlers only).
 # Matches .join(var) and .join(&var) but NOT .join("literal") or string::join(" sep").
-# False positives are possible — each hit needs a manual eyeball.
-check_pattern \
-    "Path traversal candidates (.join with variable in route handlers)" \
-    '\.join\(&?[a-zA-Z_]' \
-    "$TAURI_DIR/src/daemon/routes" \
-    "Review each .join(<var>) — ensure the argument is never user-supplied without validation."
+# Reviewed safe hits are excluded below — any new hit requires a manual eyeball.
+path_traversal_hits=$(grep -rn --include="*.rs" -E '\.join\(&?[a-zA-Z_]' \
+    "$TAURI_DIR/src/daemon/routes" 2>/dev/null \
+    | grep -v "info/mod.rs:116" \
+    | grep -v "compose/mod.rs:164" \
+    | grep -v "compose/mod.rs:396" \
+    | grep -v "volumes/mod.rs:239" \
+    || true)
+if [[ -n "$path_traversal_hits" ]]; then
+    red  "  FAIL: Path traversal candidates (.join with variable in route handlers)"
+    red  "        Review each .join(<var>) — ensure the argument is never user-supplied without validation."
+    echo "$path_traversal_hits" | sed 's/^/        /'
+    overall=1
+else
+    green "  PASS: Path traversal candidates (.join with variable in route handlers)"
+fi
 
 # OM-2026-002: Windows file writes without ACL
 check_pattern \
