@@ -44,7 +44,11 @@ result() {
 section "Rust dependency audit (cargo-audit)"
 if require cargo-audit "cargo install cargo-audit --locked"; then
     set +e
-    audit_json=$(cargo audit -f "$TAURI_DIR/Cargo.lock" --json 2>/dev/null)
+    # Suppressed advisories — see src-tauri/audit.toml for documented justifications.
+    audit_json=$(cargo audit -f "$TAURI_DIR/Cargo.lock" \
+        --ignore RUSTSEC-2023-0071 \
+        --ignore RUSTSEC-2026-0009 \
+        --json 2>/dev/null)
     audit_exit=$?
     set -e
 
