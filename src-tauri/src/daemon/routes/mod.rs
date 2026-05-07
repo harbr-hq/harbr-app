@@ -10,7 +10,7 @@ pub mod networks;
 pub mod volumes;
 
 use axum::{http::{header, Method}, middleware, Router};
-use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::cors::CorsLayer;
 
 use crate::daemon::{auth, AppState};
 
@@ -42,13 +42,12 @@ fn api_v1() -> Router<AppState> {
 }
 
 fn cors() -> CorsLayer {
-    // Allow the Vite dev server and the Tauri webview origin.
-    // Tighten this before any public release.
+    let allowed_origins = [
+        "http://localhost:1420".parse().expect("valid origin"),
+        "tauri://localhost".parse().expect("valid origin"),
+    ];
     CorsLayer::new()
-        .allow_origin(AllowOrigin::predicate(|origin, _| {
-            let bytes = origin.as_bytes();
-            bytes.starts_with(b"http://localhost:") || bytes.starts_with(b"tauri://")
-        }))
+        .allow_origin(allowed_origins)
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
         .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE])
 }
