@@ -1,6 +1,6 @@
 {
   "name": "harbr",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Podman-based Docker Desktop alternative — native, fast, no forced sign-ins",
   "author": "Harbr Contributors",
   "license": "MIT",
