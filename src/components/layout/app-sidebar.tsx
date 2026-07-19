@@ -1,6 +1,7 @@
 import { Activity, Boxes, Database, FileSearch, HelpCircle, LayoutDashboard, Layers, Layers2, Network, Settings } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/harbr-icon.png";
+import logoLight from "@/assets/harbr-logo-light.png";
+import logoDark from "@/assets/harbr-logo-dark.png";
 import { useHelpSection } from "@/hooks/use-help-section";
 import {
   Sidebar,
@@ -33,9 +34,10 @@ function SidebarLogo() {
   return (
     <SidebarHeader className="px-3 py-3">
       <div className="flex items-center gap-2.5">
-        <img src={logo} alt="Harbr" className="h-9 w-auto shrink-0 object-contain" />
+        <img src={logoLight} alt="Harbr" className="h-9 w-auto shrink-0 object-contain dark:hidden" />
+        <img src={logoDark} alt="Harbr" className="hidden h-9 w-auto shrink-0 object-contain dark:block" />
         {state === "expanded" && (
-          <span className="text-2xl tracking-tight" style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800 }}>harbr</span>
+          <span className="text-[1.7rem] tracking-tight" style={{ fontFamily: "'Satoshi', sans-serif", fontWeight: 700 }}>Harbr</span>
         )}
       </div>
     </SidebarHeader>
